@@ -223,7 +223,7 @@ export function calculateBreakEvenPoint(inputs) {
     breakEvenYear,
     totalCarCost: lastData.car,
     totalTransportCost: lastData.transport,
-    resaleValueAt10: data[Math.min(9, data.length - 1)].resale,
+    resaleValueAtEnd: lastData.resale,
     totalInterestPaid: Math.round(totalInterestPaid / 10000),
   };
 }

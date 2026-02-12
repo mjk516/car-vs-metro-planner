@@ -1,4 +1,5 @@
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+const yahooFinance = new YahooFinance();
 
 // 한국 주식/ETF 티커 매핑 (Yahoo Finance 형식)
 const TICKER_MAP = {

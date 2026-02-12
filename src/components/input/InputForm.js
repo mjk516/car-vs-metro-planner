@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatNumberInput, parseFormattedNumber } from '@/utils/format';
 import { CAR_CATEGORIES } from '@/data/car-data';
@@ -46,27 +46,26 @@ export default function InputForm() {
       if (saved) {
         const parsed = JSON.parse(saved);
         setForm((prev) => ({ ...prev, ...parsed }));
-        // 상세 비용이 세팅되어 있으면 섹션 열기
-        if (parsed.fuelEfficiency || parsed.insuranceYearly || parsed.useLoan) {
+        if (parsed.insuranceYearly || parsed.taxYearly || parsed.useLoan) {
           setShowDetailCosts(true);
         }
       }
     } catch {}
   }, []);
 
-  // 입력값 변경 시 sessionStorage에 저장
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(form));
-    } catch {}
-  }, [form]);
+  // sessionStorage에 저장하는 헬퍼 (useEffect 대신 직접 호출)
+  const saveToSession = (nextForm) => {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextForm)); } catch {}
+  };
 
   const handleChange = (field, value) => {
-    if (FORMATTED_FIELDS.includes(field)) {
-      setForm((prev) => ({ ...prev, [field]: formatNumberInput(value) }));
-    } else {
-      setForm((prev) => ({ ...prev, [field]: value }));
-    }
+    setForm((prev) => {
+      const next = FORMATTED_FIELDS.includes(field)
+        ? { ...prev, [field]: formatNumberInput(value) }
+        : { ...prev, [field]: value };
+      saveToSession(next);
+      return next;
+    });
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
@@ -502,8 +501,6 @@ export default function InputForm() {
     </form>
   );
 }
-
-import { forwardRef } from 'react';
 
 const InputField = forwardRef(function InputField({ label, unit, placeholder, value, onChange, error, hint, type = 'text' }, ref) {
   return (
