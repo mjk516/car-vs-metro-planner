@@ -326,7 +326,7 @@ export default function InputForm() {
                     key={v}
                     type="button"
                     onClick={() => handleChange('downPaymentPercent', String(v))}
-                    className={`px-2 py-0.5 rounded text-xs border transition-colors ${
+                    className={`flex-1 py-0.5 rounded text-xs border transition-colors ${
                       parseFloat(form.downPaymentPercent) === v
                         ? 'bg-primary text-white border-primary'
                         : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary'
@@ -361,7 +361,7 @@ export default function InputForm() {
                     key={v}
                     type="button"
                     onClick={() => handleChange('loanTermMonths', String(v))}
-                    className={`px-2 py-0.5 rounded text-xs border transition-colors ${
+                    className={`flex-1 py-0.5 rounded text-xs border transition-colors ${
                       parseInt(form.loanTermMonths) === v
                         ? 'bg-primary text-white border-primary'
                         : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary'
@@ -396,7 +396,7 @@ export default function InputForm() {
                     key={v}
                     type="button"
                     onClick={() => handleChange('loanRate', String(v))}
-                    className={`px-2 py-0.5 rounded text-xs border transition-colors ${
+                    className={`flex-1 py-0.5 rounded text-xs border transition-colors ${
                       parseFloat(form.loanRate) === v
                         ? 'bg-primary text-white border-primary'
                         : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary'

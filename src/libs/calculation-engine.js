@@ -204,9 +204,13 @@ export function calculateBreakEvenPoint(inputs) {
     // 대중교통 누적
     transportCumulative += transportCosts.yearlyTotal;
 
+    // 총 지출 (매각 안 할 경우: 현금 지출 + 잔여 대출)
+    const carGrossCost = carCashSpent + Math.max(0, loanBalance);
+
     data.push({
       year,
       car: Math.round(carNetCost / 10000),
+      carGross: Math.round(carGrossCost / 10000),
       transport: Math.round(transportCumulative / 10000),
       resale: Math.round(resaleValue / 10000),
       carLabel: `${year}년`,
