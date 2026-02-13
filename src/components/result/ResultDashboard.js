@@ -72,7 +72,30 @@ export default function ResultDashboard() {
           <SummaryItem label="월 고정지출" value={formatManWon(inputs.monthlyExpense)} />
           <SummaryItem label="편도 통근거리" value={`${inputs.commuteDistance}km`} />
           <SummaryItem label="주간 통근횟수" value={`주 ${inputs.commuteFrequency}회`} />
+          
+          <SummaryItem 
+            label="주말/휴일 외출" 
+            value={`월 ${inputs.weekendTripsPerMonth}회 (회당 ${inputs.weekendTripDistance}km)`} 
+          />
+
           <SummaryItem label="희망 차량가격" value={formatManWon(inputs.carPrice)} />
+
+          {/* 💡 보험료: 직접 입력값이 없으면 엔진에서 계산된 결과값(result.carCosts.insurance)을 표시 */}
+          <SummaryItem 
+            label="연 예상 보험료" 
+            value={inputs.insuranceYearly 
+              ? formatManWon(inputs.insuranceYearly) 
+              : `${formatManWon(Math.round(result.carCosts.insurance / 10000))} (자동산출)`} 
+          />
+          
+          {/* 💡 자동차세: 직접 입력값이 없으면 엔진에서 계산된 결과값(result.carCosts.tax)을 표시 */}
+          <SummaryItem 
+            label="연 예상 자동차세" 
+            value={inputs.taxYearly 
+              ? formatManWon(inputs.taxYearly) 
+              : `${formatManWon(Math.round(result.carCosts.tax / 10000))} (자동산출)`} 
+          />
+
           {inputs.useLoan && (
             <SummaryItem
               label="구매 방식"
@@ -102,10 +125,8 @@ export default function ResultDashboard() {
 
       {/* 차트 영역 레이아웃 변경 */}
       <div className="space-y-6">
-        {/* 상단: 손익분기점 분석 (가로 전체) */}
         <BreakEvenChart breakEvenData={result.breakEven} />
         
-        {/* 하단 2단 구성: 자가용 비용 구성 & 감가상각 그래프 (나란히 배치) */}
         <div className="grid md:grid-cols-2 gap-6">
           <CostPieChart 
             carCosts={result.carCosts} 

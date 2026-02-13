@@ -27,7 +27,6 @@ export default function CostComparisonCard({ carCosts, transportCosts, loanCosts
           <p className="text-sm text-gray-500 mt-1">{formatManWon(Math.round(carCosts.yearlyTotal / 10000))}/년</p>
           
           <div className="mt-3 space-y-1.5 text-xs text-gray-500">
-            {/* 핵심 수정: loanCosts가 존재하고 monthlyPayment가 0보다 큰지 확실히 체크 */}
             {loanCosts && loanCosts.monthlyPayment > 0 ? (
               <>
                 <CostRow 
@@ -67,6 +66,8 @@ export default function CostComparisonCard({ carCosts, transportCosts, loanCosts
           <div className="mt-3 space-y-1.5 text-xs text-gray-500">
             <CostRow label="교통카드/정기권" value={transportCosts.monthlyPass * 12} />
             <CostRow label="택시 보조비" value={transportCosts.taxiMonthly * 12} />
+            {/* 추가된 주말 외출 비용 항목 */}
+            <CostRow label="주말 외출 비용" value={transportCosts.weekendMonthly * 12} />
           </div>
         </div>
       </div>
@@ -87,7 +88,6 @@ export default function CostComparisonCard({ carCosts, transportCosts, loanCosts
 }
 
 function CostRow({ label, value, isMonthly }) {
-  // value가 0이거나 없을 경우를 대비해 기본값 0 설정
   const safeValue = value || 0;
   const displayValue = isMonthly ? safeValue : Math.round(safeValue / 12);
   

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatNumberInput, parseFormattedNumber } from '@/utils/format';
 import { CAR_COSTS } from '@/data/cost-constants';
@@ -36,29 +36,35 @@ const INITIAL_STATE = {
 const FORMATTED_FIELDS = ['salary', 'assets', 'monthlyExpense', 'carPrice', 'insuranceYearly', 'taxYearly'];
 
 function loadSavedForm() {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') return INITIAL_STATE;
   try {
     const saved = sessionStorage.getItem(SESSION_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) return { ...INITIAL_STATE, ...JSON.parse(saved) };
   } catch {}
-  return null;
+  return INITIAL_STATE;
 }
 
 export default function InputForm() {
   const router = useRouter();
   
-  /**
-   * 💡 해결책: 지연 초기화만 사용하고 useEffect를 완전히 제거합니다.
-   * 이렇게 하면 'setState within an effect' 경고 자체가 발생할 수 없습니다.
-   */
-  const [form, setForm] = useState(() => {
-    if (typeof window === 'undefined') return INITIAL_STATE;
-    const saved = loadSavedForm();
-    return saved ? { ...INITIAL_STATE, ...saved } : INITIAL_STATE;
-  });
-
+  // 하이드레이션 완료 여부 플래그
+  const [hasMounted, setHasMounted] = useState(false);
+  const [form, setForm] = useState(INITIAL_STATE);
   const [errors, setErrors] = useState({});
   const fieldRefs = useRef({});
+
+  // 마운트 시점에 데이터 복구 (setTimeout으로 동기적 setState 경고 해결)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const saved = loadSavedForm();
+      if (saved) {
+        setForm(saved);
+      }
+      setHasMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const setFieldRef = (name, el) => {
     if (el) {
@@ -115,6 +121,8 @@ export default function InputForm() {
     e.preventDefault();
     if (!validate()) return;
 
+    // 비어있는 보험료와 세금은 전송 데이터에서 제거하거나 null 처리하여 
+    // 엔진이 기본값으로 계산하게 함
     const data = {
       ...form,
       salary: parseFormattedNumber(form.salary),
@@ -125,21 +133,23 @@ export default function InputForm() {
       weekendTripsPerMonth: parseInt(form.weekendTripsPerMonth),
       weekendTripDistance: parseFloat(form.weekendTripDistance),
       carPrice: parseFormattedNumber(form.carPrice),
+      // 미입력 시 빈 문자열이 아닌 null을 보내 엔진의 자동 계산 로직 유도
+      insuranceYearly: form.insuranceYearly ? parseFormattedNumber(form.insuranceYearly) : null,
+      taxYearly: form.taxYearly ? parseFormattedNumber(form.taxYearly) : null,
     };
 
     localStorage.setItem('finance-input', JSON.stringify(data));
     router.push('/result');
   };
 
-  /**
-   * 💡 suppressHydrationWarning을 사용하여 서버/클라이언트 데이터 차이로 인한 에러를 무시합니다.
-   * input 폼에서는 가장 흔하고 안전한 방식입니다.
-   */
+  if (!hasMounted) {
+    return <div className="min-h-screen" />;
+  }
+
   return (
     <form 
       onSubmit={handleSubmit} 
-      className="space-y-6" 
-      suppressHydrationWarning
+      className="space-y-6"
     >
       <IncomeSection 
         form={form} 
