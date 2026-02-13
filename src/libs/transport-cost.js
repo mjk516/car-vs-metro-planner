@@ -6,7 +6,7 @@ import { TRANSPORT_COSTS } from '@/data/cost-constants';
  * @returns {object} 비용 상세 내역
  */
 export function calculateTransportCosts(inputs) {
-  const { commuteDistance } = inputs;
+  const { commuteDistance, weekendTripsPerMonth, weekendTripDistance } = inputs;
 
   const monthlyPass = TRANSPORT_COSTS.MONTHLY_PASS;
 
@@ -19,12 +19,25 @@ export function calculateTransportCosts(inputs) {
     taxiMonthly = TRANSPORT_COSTS.TAXI_MONTHLY.high;
   }
 
-  const monthlyTotal = monthlyPass + taxiMonthly;
+  // 주말/공휴일 이동 비용 계산
+  const trips = weekendTripsPerMonth || 0;
+  const dist = weekendTripDistance || 0;
+  
+  // 기본 1,500원 + 10km 초과시 5km당 100원 추가 (한국 대중교통 표준 기준)
+  let farePerTrip = TRANSPORT_COSTS.BASE_FARE || 1500;
+  if (dist > 10) {
+    farePerTrip += Math.ceil((dist - 10) / 5) * (TRANSPORT_COSTS.EXTRA_FARE_PER_5KM || 100);
+  }
+  
+  const weekendMonthly = trips * 2 * farePerTrip; // 왕복 기준
+
+  const monthlyTotal = monthlyPass + taxiMonthly + weekendMonthly;
   const yearlyTotal = monthlyTotal * 12;
 
   return {
     monthlyPass,
     taxiMonthly,
+    weekendMonthly,
     monthlyTotal,
     yearlyTotal,
   };

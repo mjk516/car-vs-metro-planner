@@ -32,6 +32,7 @@ export function calculateCarCosts(inputs) {
     );
     // UI에서 보여주는 '할부원금+이자'의 연간 총합
     loanPaymentYearly = loanResult.monthlyPayment * 12;
+    
   }
 
   // 운영 비용 항목들

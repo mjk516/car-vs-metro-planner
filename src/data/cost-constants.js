@@ -1,5 +1,3 @@
-// 한국 기준 자동차 및 대중교통 비용 상수 (2024~2025년 기준)
-
 export const CAR_COSTS = {
   // 감가상각률 (연간, 정률법 기준 - 잔존가치 대비 %)
   DEPRECIATION_RATES: {
@@ -150,6 +148,8 @@ export const CAR_COSTS = {
 export const TRANSPORT_COSTS = {
   // 대중교통 월 정기권 (지역별)
   MONTHLY_PASS: 65000,
+  BASE_FARE: 1500,
+  EXTRA_FARE_PER_5KM: 100,
   MONTHLY_PASS_BY_REGION: {
     seoul: 65000,            // 기후동행카드
     gyeonggi: 70000,         // 경기 K-패스

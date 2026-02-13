@@ -85,7 +85,7 @@ export default function ResultDashboard() {
             label="연 예상 보험료" 
             value={inputs.insuranceYearly 
               ? formatManWon(inputs.insuranceYearly) 
-              : `${formatManWon(Math.round(result.carCosts.insurance / 10000))} (자동산출)`} 
+              : `${formatManWon(Math.round(result.carCosts.insurance / 10000))} (자동계산)`} 
           />
           
           {/* 💡 자동차세: 직접 입력값이 없으면 엔진에서 계산된 결과값(result.carCosts.tax)을 표시 */}

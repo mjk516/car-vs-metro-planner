@@ -21,7 +21,8 @@ export default function LoanSection({ form, errors, onChange, setFieldRef }) {
             <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">
               4
             </span>
-            구매 방식
+            {/* 💡 에러 해결: 제목을 "할부 상세 설정"으로 통일 */}
+            할부 상세 설정
           </h3>
           <button
             type="button"
@@ -68,7 +69,6 @@ export default function LoanSection({ form, errors, onChange, setFieldRef }) {
           onChange={(v) => onChange('downPaymentPercent', v)}
           error={errors?.downPaymentPercent}
           hint="차량 가격 대비 먼저 지불할 금액의 비율"
-          // setFieldRef를 사용하여 부모의 fieldRefs.current에 등록
           ref={(el) => setFieldRef('downPaymentPercent', el)}
         />
 
@@ -91,7 +91,6 @@ export default function LoanSection({ form, errors, onChange, setFieldRef }) {
               </button>
             ))}
           </div>
-          {/* 스크롤 이동을 위한 앵커 ref 등록 */}
           <div ref={(el) => setFieldRef('loanTermMonths', el)} />
         </div>
 
