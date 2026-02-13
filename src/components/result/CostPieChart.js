@@ -3,18 +3,38 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatWon } from '@/utils/format';
 
-const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
+const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#3b82f6'];
 
-export default function CostPieChart({ carCosts }) {
-  const data = [
-    { name: '감가상각', value: carCosts.depreciation },
+export default function CostPieChart({ carCosts, loanCosts }) {
+  // 데이터가 없을 경우를 위한 방어 코드
+  if (!carCosts) return null;
+
+  const data = [];
+  
+  // 할부 데이터가 넘어왔는지 확인
+  if (loanCosts && loanCosts.monthlyPayment > 0) {
+    // 1. 할부 개월 수 계산
+    const months = Math.round(loanCosts.totalPayment / loanCosts.monthlyPayment);
+    // 2. 연간 이자 및 원금 계산 (중요: 변수 정의 오류 수정)
+    const annualInterest = Math.round((loanCosts.totalInterest / months) * 12);
+    const annualPrincipal = (loanCosts.monthlyPayment * 12) - annualInterest;
+    
+    data.push({ name: '할부 원금', value: annualPrincipal });
+    data.push({ name: '할부 이자', value: annualInterest });
+  } else {
+    // 할부가 아닐 때만 감가상각 표시
+    data.push({ name: '감가상각', value: carCosts.depreciation });
+  }
+  
+  // 나머지 비용 추가
+  data.push(
     { name: '유류비', value: carCosts.fuelCost },
     { name: '보험료', value: carCosts.insurance },
     { name: '자동차세', value: carCosts.tax },
     { name: '정비비', value: carCosts.maintenance },
     { name: '주차비', value: carCosts.parking },
-    { name: '기타', value: carCosts.misc },
-  ];
+    { name: '기타', value: carCosts.misc }
+  );
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
@@ -51,15 +71,15 @@ export default function CostPieChart({ carCosts }) {
                 {data.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
-              </Pie><Tooltip content={CustomTooltip} />
-              
+              </Pie>
+              <Tooltip content={CustomTooltip} />
             </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="flex-1 grid grid-cols-2 gap-2">
           {data.map((item, index) => (
             <div key={item.name} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index] }} />
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
               <span className="text-xs text-gray-600">{item.name}</span>
               <span className="text-xs font-medium ml-auto">{((item.value / total) * 100).toFixed(0)}%</span>
             </div>

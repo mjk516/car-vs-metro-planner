@@ -2,7 +2,10 @@
 
 import { formatManWon, formatWon } from '@/utils/format';
 
-export default function CostComparisonCard({ carCosts, transportCosts }) {
+export default function CostComparisonCard({ carCosts, transportCosts, loanCosts }) {
+  // carCosts나 transportCosts가 없을 경우를 대비한 방어 코드
+  if (!carCosts || !transportCosts) return null;
+
   const carMonthly = carCosts.monthlyTotal;
   const transportMonthly = transportCosts.monthlyTotal;
   const diff = carMonthly - transportMonthly;
@@ -22,8 +25,26 @@ export default function CostComparisonCard({ carCosts, transportCosts }) {
           </div>
           <p className="text-2xl font-bold text-foreground">{formatWon(carMonthly)}<span className="text-sm font-normal text-gray-500">/월</span></p>
           <p className="text-sm text-gray-500 mt-1">{formatManWon(Math.round(carCosts.yearlyTotal / 10000))}/년</p>
+          
           <div className="mt-3 space-y-1.5 text-xs text-gray-500">
-            <CostRow label="감가상각" value={carCosts.depreciation} />
+            {/* 핵심 수정: loanCosts가 존재하고 monthlyPayment가 0보다 큰지 확실히 체크 */}
+            {loanCosts && loanCosts.monthlyPayment > 0 ? (
+              <>
+                <CostRow 
+                  label="할부 원금"
+                  value={loanCosts.monthlyPayment - Math.round(loanCosts.totalInterest / (loanCosts.totalPayment / loanCosts.monthlyPayment))} 
+                  isMonthly 
+                />
+                <CostRow 
+                  label="할부 이자"
+                  value={Math.round(loanCosts.totalInterest / (loanCosts.totalPayment / loanCosts.monthlyPayment))}
+                  isMonthly 
+                />
+              </>
+            ) : (
+              <CostRow label="감가상각" value={carCosts.depreciation} />
+            )}
+            
             <CostRow label="유류비" value={carCosts.fuelCost} />
             <CostRow label="보험료" value={carCosts.insurance} />
             <CostRow label="자동차세" value={carCosts.tax} />
@@ -50,7 +71,6 @@ export default function CostComparisonCard({ carCosts, transportCosts }) {
         </div>
       </div>
 
-      {/* 차이 표시 */}
       <div className="mt-4 bg-gray-50 rounded-xl p-4 text-center">
         <p className="text-sm text-gray-600">
           월간 비용 차이:{' '}
@@ -66,11 +86,15 @@ export default function CostComparisonCard({ carCosts, transportCosts }) {
   );
 }
 
-function CostRow({ label, value }) {
+function CostRow({ label, value, isMonthly }) {
+  // value가 0이거나 없을 경우를 대비해 기본값 0 설정
+  const safeValue = value || 0;
+  const displayValue = isMonthly ? safeValue : Math.round(safeValue / 12);
+  
   return (
     <div className="flex justify-between">
       <span>{label}</span>
-      <span>{formatWon(Math.round(value / 12))}/월</span>
+      <span>{formatWon(displayValue)}/월</span>
     </div>
   );
 }

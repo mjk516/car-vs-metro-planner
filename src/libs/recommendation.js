@@ -31,9 +31,24 @@ export function makeRecommendation(inputs) {
   const affordability = calculateAffordability(salary, assets, carPrice, carCosts.yearlyTotal);
   const breakEven = calculateBreakEvenPoint(inputs);
 
+  // 할부 데이터 계산
+  let loanCosts = null;
+  if (inputs.useLoan) {
+    loanCosts = calculateLoan(
+      carPrice,
+      carPrice * (inputs.downPaymentPercent || 30) / 100,
+      inputs.loanTermMonths || 48,
+      inputs.loanRate || 4.5
+    );
+  }
+
+  // 월 여유 자금 계산 (중복 선언 방지를 위해 상단에서 한 번만 선언)
+  const monthlyDisposable = (salary * 10000 / 12) - (monthlyExpense * 10000);
+
   let score = 0;
   const reasons = [];
 
+  // 비용 비교
   if (carCosts.yearlyTotal < transportCosts.yearlyTotal) {
     score += 2;
     reasons.push({
@@ -52,6 +67,7 @@ export function makeRecommendation(inputs) {
   const assetCoverageYears = (assets * 10000) / carCosts.yearlyTotal;
   const isWealthy = assetCoverageYears >= 10 && affordability.assetRatio < 30;
 
+  // 연봉 대비 분석
   if (affordability.isSalaryBurden && !isWealthy) {
     score -= 2;
     reasons.push({
@@ -78,6 +94,7 @@ export function makeRecommendation(inputs) {
     });
   }
 
+  // 자산 대비 분석
   if (affordability.isAssetBurden) {
     score -= 2;
     reasons.push({
@@ -104,6 +121,7 @@ export function makeRecommendation(inputs) {
     });
   }
 
+  // 통근 거리 분석
   if (commuteDistance >= THRESHOLDS.COMMUTE_LONG) {
     score += 2;
     reasons.push({
@@ -118,6 +136,7 @@ export function makeRecommendation(inputs) {
     });
   }
 
+  // 최소 자산 기준
   if (assets < THRESHOLDS.MIN_ASSET_FOR_CAR) {
     score -= 3;
     reasons.push({
@@ -126,7 +145,7 @@ export function makeRecommendation(inputs) {
     });
   }
 
-  const monthlyDisposable = (salary * 10000 / 12) - (monthlyExpense * 10000);
+  // 월 여유자금 분석
   if (monthlyDisposable < carCosts.monthlyTotal && !isWealthy) {
     score -= 2;
     reasons.push({
@@ -146,14 +165,9 @@ export function makeRecommendation(inputs) {
     });
   }
 
-  if (inputs.useLoan) {
-    const loanResult = calculateLoan(
-      carPrice,
-      carPrice * (inputs.downPaymentPercent || 30) / 100,
-      inputs.loanTermMonths || 48,
-      inputs.loanRate || 4.5
-    );
-    const interestManWon = Math.round(loanResult.totalInterest / 10000);
+  // 할부 이자 비중 분석
+  if (inputs.useLoan && loanCosts) {
+    const interestManWon = Math.round(loanCosts.totalInterest / 10000);
     if (interestManWon > carPrice * 0.1) {
       score -= 1;
       reasons.push({
@@ -173,6 +187,7 @@ export function makeRecommendation(inputs) {
     score,
     reasons,
     carCosts,
+    loanCosts,
     transportCosts,
     affordability,
     breakEven,

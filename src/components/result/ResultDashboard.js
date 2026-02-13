@@ -22,7 +22,7 @@ export default function ResultDashboard() {
       return;
     }
     const parsed = JSON.parse(stored);
-    setInputs(parsed);
+    let currentInputs={...parsed};
 
     // 실시간 유가를 반영하여 계산
     fetch('/api/fuel-price')
@@ -33,9 +33,12 @@ export default function ResultDashboard() {
           setFuelSource(json.data.source);
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        console.error('유가 정보를 가져오는데 실패했습니다.');
+      })
       .finally(() => {
-        setResult(makeRecommendation(parsed));
+        setInputs(currentInputs);
+        setResult(makeRecommendation(currentInputs));
       });
   }, [router]);
 
@@ -102,12 +105,20 @@ export default function ResultDashboard() {
       </div>
 
       {/* 비용 비교 */}
-      <CostComparisonCard carCosts={result.carCosts} transportCosts={result.transportCosts} />
+      <CostComparisonCard 
+        carCosts={result.carCosts} 
+        transportCosts={result.transportCosts} 
+        loanCosts={result.loanCosts} 
+      />
+      <CostPieChart 
+        carCosts={result.carCosts} 
+        loanCosts={result.loanCosts}
+      />
 
       {/* 차트 영역 */}
       <div className="grid md:grid-cols-2 gap-6">
         <BreakEvenChart breakEvenData={result.breakEven} />
-        <CostPieChart carCosts={result.carCosts} />
+        <CostPieChart carCosts={result.carCosts} loanCosts={result.loanCosts} />
       </div>
 
       {/* 다시 분석 버튼 */}
