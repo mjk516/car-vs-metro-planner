@@ -73,7 +73,7 @@ export default function BreakEvenChart({ breakEvenData }) {
               tick={{ fontSize: 11 }}
               label={{ value: '만원', position: 'insideTopLeft', offset: -5, fontSize: 11 }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={CustomTooltip} />
             <Legend payload={legendPayload} />
 
             {/* 자가용 총 지출 (매각 전) - 연한 파란색 점선 */}

@@ -51,8 +51,8 @@ export default function CostPieChart({ carCosts }) {
                 {data.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              </Pie><Tooltip content={CustomTooltip} />
+              
             </PieChart>
           </ResponsiveContainer>
         </div>
