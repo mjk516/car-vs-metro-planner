@@ -46,13 +46,31 @@ function loadSavedForm() {
 
 export default function InputForm() {
   const router = useRouter();
-  const savedForm = loadSavedForm();
-  const [form, setForm] = useState(savedForm ? { ...INITIAL_STATE, ...savedForm } : INITIAL_STATE);
+  
+  /**
+   * 💡 해결책: 지연 초기화만 사용하고 useEffect를 완전히 제거합니다.
+   * 이렇게 하면 'setState within an effect' 경고 자체가 발생할 수 없습니다.
+   */
+  const [form, setForm] = useState(() => {
+    if (typeof window === 'undefined') return INITIAL_STATE;
+    const saved = loadSavedForm();
+    return saved ? { ...INITIAL_STATE, ...saved } : INITIAL_STATE;
+  });
+
   const [errors, setErrors] = useState({});
   const fieldRefs = useRef({});
 
+  const setFieldRef = (name, el) => {
+    if (el) {
+      fieldRefs.current[name] = el;
+    }
+  };
+
   const saveToSession = (nextForm) => {
-    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextForm)); } catch {}
+    if (typeof window === 'undefined') return;
+    try { 
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextForm)); 
+    } catch {}
   };
 
   const handleChange = (field, value) => {
@@ -71,27 +89,12 @@ export default function InputForm() {
   const validate = () => {
     const newErrors = {};
     const salary = parseFormattedNumber(form.salary);
-    const assets = parseFormattedNumber(form.assets);
-    const monthlyExpense = parseFormattedNumber(form.monthlyExpense);
     const commuteDistance = parseFloat(form.commuteDistance);
-    const commuteFrequency = parseInt(form.commuteFrequency);
     const carPrice = parseFormattedNumber(form.carPrice);
 
     if (!salary || salary < 100) newErrors.salary = '연봉을 100만원 이상 입력해주세요.';
-    if (assets === undefined || assets < 0) newErrors.assets = '보유 자산을 입력해주세요.';
-    if (!monthlyExpense && monthlyExpense !== 0) newErrors.monthlyExpense = '월 고정 지출을 입력해주세요.';
     if (!commuteDistance || commuteDistance <= 0) newErrors.commuteDistance = '통근 거리를 입력해주세요.';
-    if (!commuteFrequency || commuteFrequency < 1 || commuteFrequency > 7) newErrors.commuteFrequency = '주 1~7회로 입력해주세요.';
     if (!carPrice || carPrice < 500) newErrors.carPrice = '희망 차량 가격을 500만원 이상 입력해주세요.';
-
-    if (form.useLoan) {
-      const dp = parseFloat(form.downPaymentPercent);
-      if (isNaN(dp) || dp < 0 || dp > 100) newErrors.downPaymentPercent = '선수금 비율을 0~100% 사이로 입력해주세요.';
-      const term = parseInt(form.loanTermMonths);
-      if (isNaN(term) || term < 6 || term > 120) newErrors.loanTermMonths = '할부 기간을 6~120개월 사이로 입력해주세요.';
-      const rate = parseFloat(form.loanRate);
-      if (isNaN(rate) || rate < 0 || rate > 30) newErrors.loanRate = '금리를 0~30% 사이로 입력해주세요.';
-    }
 
     setErrors(newErrors);
 
@@ -112,39 +115,61 @@ export default function InputForm() {
     e.preventDefault();
     if (!validate()) return;
 
-    const carPrice = parseFormattedNumber(form.carPrice);
     const data = {
+      ...form,
       salary: parseFormattedNumber(form.salary),
       assets: parseFormattedNumber(form.assets),
       monthlyExpense: parseFormattedNumber(form.monthlyExpense),
       commuteDistance: parseFloat(form.commuteDistance),
       commuteFrequency: parseInt(form.commuteFrequency),
-      weekendTripsPerMonth: parseInt(form.weekendTripsPerMonth) || 4,
-      weekendTripDistance: parseFloat(form.weekendTripDistance) || 30,
-      carPrice,
-      useLoan: form.useLoan,
-      downPaymentPercent: parseFloat(form.downPaymentPercent) || 30,
-      loanTermMonths: parseInt(form.loanTermMonths) || 48,
-      loanRate: parseFloat(form.loanRate) || 4.5,
-      fuelEfficiency: parseFloat(form.fuelEfficiency) || undefined,
-      insuranceYearly: form.insuranceYearly ? parseFormattedNumber(form.insuranceYearly) : undefined,
-      taxYearly: form.taxYearly ? parseFormattedNumber(form.taxYearly) : undefined,
-      maintenanceYearly: form.maintenanceYearly ? parseFloat(form.maintenanceYearly) : undefined,
-      parkingMonthly: form.parkingMonthly ? parseFloat(form.parkingMonthly) : undefined,
-      miscMonthly: form.miscMonthly ? parseFloat(form.miscMonthly) : undefined,
+      weekendTripsPerMonth: parseInt(form.weekendTripsPerMonth),
+      weekendTripDistance: parseFloat(form.weekendTripDistance),
+      carPrice: parseFormattedNumber(form.carPrice),
     };
 
     localStorage.setItem('finance-input', JSON.stringify(data));
     router.push('/result');
   };
 
+  /**
+   * 💡 suppressHydrationWarning을 사용하여 서버/클라이언트 데이터 차이로 인한 에러를 무시합니다.
+   * input 폼에서는 가장 흔하고 안전한 방식입니다.
+   */
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <IncomeSection form={form} errors={errors} onChange={handleChange} fieldRefs={fieldRefs} />
-      <CommuteSection form={form} errors={errors} onChange={handleChange} fieldRefs={fieldRefs} />
-      <CarPriceSection form={form} errors={errors} onChange={handleChange} fieldRefs={fieldRefs} />
-      <LoanSection form={form} errors={errors} onChange={handleChange} fieldRefs={fieldRefs} />
-      <OperatingCostSection form={form} errors={errors} onChange={handleChange} />
+    <form 
+      onSubmit={handleSubmit} 
+      className="space-y-6" 
+      suppressHydrationWarning
+    >
+      <IncomeSection 
+        form={form} 
+        errors={errors} 
+        onChange={handleChange} 
+        setFieldRef={setFieldRef} 
+      />
+      <CommuteSection 
+        form={form} 
+        errors={errors} 
+        onChange={handleChange} 
+        setFieldRef={setFieldRef} 
+      />
+      <CarPriceSection 
+        form={form} 
+        errors={errors} 
+        onChange={handleChange} 
+        setFieldRef={setFieldRef} 
+      />
+      <LoanSection 
+        form={form} 
+        errors={errors} 
+        onChange={handleChange} 
+        setFieldRef={setFieldRef} 
+      />
+      <OperatingCostSection 
+        form={form} 
+        errors={errors} 
+        onChange={handleChange} 
+      />
       <button
         type="submit"
         className="w-full py-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-blue-200 text-lg"

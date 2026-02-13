@@ -6,6 +6,7 @@ import { makeRecommendation } from '@/libs/calculation-engine';
 import CostComparisonCard from './CostComparisonCard';
 import BreakEvenChart from './BreakEvenChart';
 import CostPieChart from './CostPieChart';
+import DepreciationChart from './DepreciationChart'; 
 import RecommendationBanner from './RecommendationBanner';
 import { formatManWon, formatPercent } from '@/utils/format';
 
@@ -22,14 +23,13 @@ export default function ResultDashboard() {
       return;
     }
     const parsed = JSON.parse(stored);
-    let currentInputs={...parsed};
+    let currentInputs = { ...parsed };
 
-    // 실시간 유가를 반영하여 계산
     fetch('/api/fuel-price')
       .then((res) => res.json())
       .then((json) => {
         if (json.data?.gasoline) {
-          parsed.fuelPrice = json.data.gasoline;
+          currentInputs.fuelPrice = json.data.gasoline;
           setFuelSource(json.data.source);
         }
       })
@@ -59,11 +59,11 @@ export default function ResultDashboard() {
       {fuelSource && (
         <div className="flex items-center gap-2 text-xs text-gray-400">
           <span className="w-2 h-2 rounded-full bg-green-400" />
-          {fuelSource === 'opinet' ? 'OPINET 실시간 유가 반영' : fuelSource === 'naver' ? '네이버 유가 데이터 반영' : '기본 유가 데이터 사용'}
+          {fuelSource === 'opinet' ? 'OPINET 실시간 유가 반영' : '기본 유가 데이터 사용'}
         </div>
       )}
 
-      {/* 입력 요약 */}
+      {/* 입력 정보 요약 */}
       <div className="bg-white rounded-2xl border border-border p-6">
         <h3 className="text-lg font-bold mb-3">입력 정보 요약</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -82,47 +82,45 @@ export default function ResultDashboard() {
         </div>
       </div>
 
-      {/* 추천 배너 */}
       <RecommendationBanner result={result} />
 
-      {/* 부담률 분석 */}
+      {/* 재정 부담률 분석 */}
       <div className="bg-white rounded-2xl border border-border p-6">
         <h3 className="text-lg font-bold mb-4">재정 부담률 분석</h3>
         <div className="grid md:grid-cols-2 gap-4">
-          <GaugeCard
-            label="연봉 대비 자가용 비용"
-            value={result.affordability.salaryRatio}
-            limit={30}
-            isBurden={result.affordability.isSalaryBurden}
-          />
-          <GaugeCard
-            label="자산 대비 차량 가격"
-            value={result.affordability.assetRatio}
-            limit={50}
-            isBurden={result.affordability.isAssetBurden}
-          />
+          <GaugeCard label="연봉 대비 자가용 비용" value={result.affordability.salaryRatio} limit={30} isBurden={result.affordability.isSalaryBurden} />
+          <GaugeCard label="자산 대비 차량 가격" value={result.affordability.assetRatio} limit={50} isBurden={result.affordability.isAssetBurden} />
         </div>
       </div>
 
-      {/* 비용 비교 */}
+      {/* 월간 비용 비교 카드 */}
       <CostComparisonCard 
         carCosts={result.carCosts} 
         transportCosts={result.transportCosts} 
         loanCosts={result.loanCosts} 
       />
-      <CostPieChart 
-        carCosts={result.carCosts} 
-        loanCosts={result.loanCosts}
-      />
 
-      {/* 차트 영역 */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* 차트 영역 레이아웃 변경 */}
+      <div className="space-y-6">
+        {/* 상단: 손익분기점 분석 (가로 전체) */}
         <BreakEvenChart breakEvenData={result.breakEven} />
-        <CostPieChart carCosts={result.carCosts} loanCosts={result.loanCosts} />
+        
+        {/* 하단 2단 구성: 자가용 비용 구성 & 감가상각 그래프 (나란히 배치) */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <CostPieChart 
+            carCosts={result.carCosts} 
+            loanCosts={result.loanCosts} 
+          />
+          <DepreciationChart 
+            breakEvenData={result.breakEven} 
+            initialCarPrice={inputs.carPrice} 
+            loanCosts={result.loanCosts}
+          />
+        </div>
       </div>
 
       {/* 다시 분석 버튼 */}
-      <div className="text-center pt-4">
+      <div className="text-center pt-4 pb-12">
         <button
           onClick={() => router.push('/input')}
           className="px-6 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"

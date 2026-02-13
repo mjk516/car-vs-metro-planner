@@ -92,9 +92,9 @@ function CostRow({ label, value, isMonthly }) {
   const displayValue = isMonthly ? safeValue : Math.round(safeValue / 12);
   
   return (
-    <div className="flex justify-between">
-      <span>{label}</span>
-      <span>{formatWon(displayValue)}/월</span>
+    <div className="flex justify-between items-center gap-4 py-0.5">
+      <span className="whitespace-nowrap flex-shrink-0">{label}</span>
+      <span className="font-medium text-right">{formatWon(displayValue)}/월</span>
     </div>
   );
 }

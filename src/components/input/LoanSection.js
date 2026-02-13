@@ -1,118 +1,121 @@
-export default function LoanSection({ form, errors, onChange, fieldRefs }) {
-  return (
-    <div className="bg-white rounded-2xl border border-border p-6">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">4</span>
-        구매 방식
-      </h3>
+'use client';
 
-      <div className="flex items-center gap-3 mb-4">
+import InputField from './InputField';
+
+/**
+ * 할부 및 금융 정보 입력 섹션
+ * 부모(InputForm)로부터 form, errors, onChange, setFieldRef를 전달받습니다.
+ */
+export default function LoanSection({ form, errors, onChange, setFieldRef }) {
+  // 방어 로직: form 객체가 아직 로드되지 않았을 경우 렌더링을 방지합니다.
+  if (!form) {
+    return null;
+  }
+
+  // 할부 미사용 시 (전액 일시불 구매)
+  if (!form.useLoan) {
+    return (
+      <div className="bg-white rounded-2xl border border-border p-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">
+              4
+            </span>
+            구매 방식
+          </h3>
+          <button
+            type="button"
+            onClick={() => onChange('useLoan', true)}
+            className="text-sm text-primary font-semibold hover:underline"
+          >
+            할부 계산하기
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 mt-2">
+          현재 전액 일시불 구매로 설정되어 있습니다.
+        </p>
+      </div>
+    );
+  }
+
+  // 할부 사용 시 상세 설정 화면
+  return (
+    <div className="bg-white rounded-2xl border border-border p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold flex items-center gap-2">
+          <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">
+            4
+          </span>
+          할부 상세 설정
+        </h3>
         <button
           type="button"
           onClick={() => onChange('useLoan', false)}
-          className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-colors ${
-            !form.useLoan
-              ? 'bg-primary text-white border-primary'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-primary'
-          }`}
+          className="text-sm text-gray-400 hover:text-gray-600"
         >
-          일시불 구매
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange('useLoan', true)}
-          className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-colors ${
-            form.useLoan
-              ? 'bg-primary text-white border-primary'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-primary'
-          }`}
-        >
-          할부 구매
+          일시불로 변경
         </button>
       </div>
 
-      {form.useLoan && (
-        <div className="grid md:grid-cols-3 gap-4 pt-2 border-t border-gray-100">
-          <QuickInputField
-            label="선수금 비율"
-            unit="%"
-            value={form.downPaymentPercent}
-            onChange={(v) => onChange('downPaymentPercent', v)}
-            error={errors.downPaymentPercent}
-            options={[10, 20, 30, 50]}
-            optionLabel={(v) => `${v}%`}
-            selectedValue={parseFloat(form.downPaymentPercent)}
-            inputProps={{ min: '0', max: '100', step: '5' }}
-            ref={(el) => { fieldRefs.current.downPaymentPercent = el; }}
-          />
-          <QuickInputField
-            label="할부 기간"
-            unit="개월"
-            value={form.loanTermMonths}
-            onChange={(v) => onChange('loanTermMonths', v)}
-            error={errors.loanTermMonths}
-            options={[24, 36, 48, 60]}
-            optionLabel={(v) => `${v}개월`}
-            selectedValue={parseInt(form.loanTermMonths)}
-            inputProps={{ min: '6', max: '120', step: '6' }}
-            ref={(el) => { fieldRefs.current.loanTermMonths = el; }}
-          />
-          <QuickInputField
-            label="연 이자율"
-            unit="%"
-            value={form.loanRate}
-            onChange={(v) => onChange('loanRate', v)}
-            error={errors.loanRate}
-            options={[3.5, 4.5, 5.5, 7.0]}
-            optionLabel={(v) => `${v}%`}
-            selectedValue={parseFloat(form.loanRate)}
-            inputProps={{ min: '0', max: '30', step: '0.1' }}
-            ref={(el) => { fieldRefs.current.loanRate = el; }}
-          />
+      <div className="space-y-4">
+        {/* 선수금 비율 입력 */}
+        <InputField
+          label="선수금 비율"
+          unit="%"
+          type="number"
+          placeholder="예: 30"
+          value={form.downPaymentPercent || ''}
+          onChange={(v) => onChange('downPaymentPercent', v)}
+          error={errors?.downPaymentPercent}
+          hint="차량 가격 대비 먼저 지불할 금액의 비율"
+          // setFieldRef를 사용하여 부모의 fieldRefs.current에 등록
+          ref={(el) => setFieldRef('downPaymentPercent', el)}
+        />
+
+        {/* 할부 기간 선택 (그리드 스타일) */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700">할부 기간</label>
+          <div className="grid grid-cols-3 gap-2">
+            {[12, 24, 36, 48, 60, 72].map((month) => (
+              <button
+                key={month}
+                type="button"
+                onClick={() => onChange('loanTermMonths', String(month))}
+                className={`py-2.5 text-sm font-medium rounded-xl border transition-all ${
+                  form.loanTermMonths === String(month)
+                    ? 'bg-primary border-primary text-white shadow-md'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
+                }`}
+              >
+                {month}개월
+              </button>
+            ))}
+          </div>
+          {/* 스크롤 이동을 위한 앵커 ref 등록 */}
+          <div ref={(el) => setFieldRef('loanTermMonths', el)} />
         </div>
-      )}
+
+        {/* 할부 금리 입력 */}
+        <InputField
+          label="할부 금리"
+          unit="%"
+          type="number"
+          step="0.1"
+          placeholder="예: 4.5"
+          value={form.loanRate || ''}
+          onChange={(v) => onChange('loanRate', v)}
+          error={errors?.loanRate}
+          hint="연 이자율 기준"
+          ref={(el) => setFieldRef('loanRate', el)}
+        />
+      </div>
+
+      {/* 안내 문구 */}
+      <div className="p-4 bg-gray-50 rounded-xl">
+        <p className="text-[11px] text-gray-500 leading-relaxed">
+          * 입력하신 할부 조건은 월 납입금 계산에 반영되며, 이는 주말 및 공휴일 이동을 포함한 전체 유지비 분석에 사용됩니다.
+        </p>
+      </div>
     </div>
   );
 }
-
-import { forwardRef } from 'react';
-
-const QuickInputField = forwardRef(function QuickInputField(
-  { label, unit, value, onChange, error, options, optionLabel, selectedValue, inputProps },
-  ref,
-) {
-  return (
-    <div ref={ref}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="relative">
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`w-full px-4 py-2.5 pr-12 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors ${
-            error ? 'border-red-400 bg-red-50' : 'border-gray-200'
-          }`}
-          {...inputProps}
-        />
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">{unit}</span>
-      </div>
-      <div className="flex gap-1 mt-1.5">
-        {options.map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => onChange(String(v))}
-            className={`flex-1 py-0.5 rounded text-xs border transition-colors ${
-              selectedValue === v
-                ? 'bg-primary text-white border-primary'
-                : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary'
-            }`}
-          >
-            {optionLabel(v)}
-          </button>
-        ))}
-      </div>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
-  );
-});

@@ -2,7 +2,7 @@ import { CAR_CATEGORIES } from '@/data/car-data';
 import { parseFormattedNumber } from '@/utils/format';
 import InputField from './InputField';
 
-export default function CarPriceSection({ form, errors, onChange, fieldRefs }) {
+export default function CarPriceSection({ form, errors, onChange, setFieldRef }) {
   const selectCarPrice = (price) => {
     onChange('carPrice', price.toString());
   };
@@ -39,7 +39,7 @@ export default function CarPriceSection({ form, errors, onChange, fieldRefs }) {
         onChange={(v) => onChange('carPrice', v)}
         error={errors.carPrice}
         hint="비교 분석에 사용될 차량 가격"
-        ref={(el) => { fieldRefs.current.carPrice = el; }}
+        ref={(el) => setFieldRef('carPrice', el)}
       />
     </div>
   );
